@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"net/http"
 
 	"github.com/MikeB1124/trimana-dashboard-api/controllers"
 	"github.com/aws/aws-lambda-go/events"
@@ -15,14 +16,20 @@ func handler(ctx context.Context, event events.APIGatewayProxyRequest) (events.A
 	var response events.APIGatewayProxyResponse
 	switch event.Path {
 	case "/hello":
-		response = controllers.HelloController()
+		if event.HTTPMethod == "GET" {
+			response = controllers.HelloController(event)
+		}
 	case "/goodbye":
-		response = controllers.GoodbyeController()
+		if event.HTTPMethod == "GET" {
+			response = controllers.GoodbyeController(event)
+		}
 	case "/custom":
-		response = controllers.CustomController()
+		if event.HTTPMethod == "GET" {
+			response = controllers.CustomController(event)
+		}
 	default:
 		response = events.APIGatewayProxyResponse{
-			StatusCode: 404,
+			StatusCode: http.StatusNotFound,
 			Body:       "\"Not found\"",
 		}
 	}
