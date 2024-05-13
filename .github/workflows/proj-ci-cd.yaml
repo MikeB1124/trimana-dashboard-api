@@ -1,5 +1,6 @@
 name: Go Build and Upload to S3
 
+# Run actions only on push to main
 on:
   push:
     branches:
@@ -18,15 +19,17 @@ jobs:
       with:
         go-version: 1.18
 
+    # Build go binary and package it in a zip file
     - name: Build and Package
       run: |
         GOOS=linux GOARCH=amd64 go build -tags lambda.norpc -o bootstrap main.go
         zip trimana-dashboard-api.zip bootstrap
 
+    # Upload zip artifact so that the s3 upload job can use it
     - name: Upload artifact
       uses: actions/upload-artifact@v2
       with:
-        name: zip-file
+        name: lambda-package
         path: trimana-dashboard-api.zip
 
   upload:
@@ -34,6 +37,7 @@ jobs:
 
     needs: build  # This ensures the 'build' job is completed before starting this job
 
+    #Configure AWS creds
     steps:
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
@@ -42,11 +46,13 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: us-west-2
 
+    # Download zip file that was uploaded from the build stage
     - name: Download artifact
       uses: actions/download-artifact@v2
       with:
-        name: zip-file
+        name: lambda-package
 
+    # Upload the zip file to the s3 bucket
     - name: Copy files to the test-prod S3 bucket
       run: |
         aws s3 cp trimana-dashboard-api.zip s3://trimana-dashboard-bucket/lambdas/trimana-dashboard-api.zip
