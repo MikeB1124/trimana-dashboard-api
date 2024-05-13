@@ -3,7 +3,7 @@ name: Go Build and Upload to S3
 on:
   push:
     branches:
-      - master
+      - main
 
 jobs:
   build:
