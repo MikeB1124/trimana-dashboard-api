@@ -26,6 +26,8 @@ func handler(ctx context.Context, event events.APIGatewayProxyRequest) (events.A
 	case "/custom":
 		if event.HTTPMethod == "GET" {
 			response = controllers.CustomController(event)
+		} else if event.HTTPMethod == "POST" {
+			response = controllers.CustomPostController(event)
 		}
 	default:
 		response = events.APIGatewayProxyResponse{
