@@ -11,6 +11,10 @@ env:
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   AWS_REGION: us-west-2
+  ZIP_FILE_NAME: trimana-dashboard-api.zip
+  S3_BUCKET_NAME: trimana-dashboard-bucket
+  LAMBDA_FUNCTION_NAME: test-go
+
 
 jobs:
   build:
@@ -29,14 +33,14 @@ jobs:
     - name: Build and Package
       run: |
         GOOS=linux GOARCH=amd64 go build -tags lambda.norpc -o bootstrap main.go
-        zip trimana-dashboard-api.zip bootstrap
+        zip ${{ env.ZIP_FILE_NAME }} bootstrap
 
     # Upload zip artifact so that the s3 upload job can use it
     - name: Upload artifact
       uses: actions/upload-artifact@v2
       with:
         name: lambda-package
-        path: trimana-dashboard-api.zip
+        path: ${{ env.ZIP_FILE_NAME }}
 
   upload:
     runs-on: ubuntu-latest
@@ -53,7 +57,7 @@ jobs:
     # Upload the zip file to the s3 bucket
     - name: Copy files to the test-prod S3 bucket
       run: |
-        aws s3 cp trimana-dashboard-api.zip s3://trimana-dashboard-bucket/lambdas/trimana-dashboard-api.zip
+        aws s3 cp $ZIP_FILE_NAME s3://$S3_BUCKET_NAME/lambdas/$ZIP_FILE_NAME
 
   update-lambda:
     runs-on: ubuntu-latest
@@ -64,4 +68,4 @@ jobs:
     steps:
     - name: Update Lambda function
       run: |
-        aws lambda update-function-code --function-name test-go --s3-bucket trimana-dashboard-bucket --s3-key lambdas/trimana-dashboard-api.zip
+        aws lambda update-function-code --function-name $LAMBDA_FUNCTION_NAME --s3-bucket $S3_BUCKET_NAME --s3-key lambdas/$ZIP_FILE_NAME
