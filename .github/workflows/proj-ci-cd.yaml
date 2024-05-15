@@ -13,7 +13,7 @@ env:
   AWS_REGION: us-west-2
   ZIP_FILE_NAME: trimana-dashboard-api.zip
   S3_BUCKET_NAME: trimana-dashboard-bucket
-  LAMBDA_FUNCTION_NAME: test-go
+  LAMBDA_FUNCTION_NAME: trimana-dashboard-api
 
 
 jobs:
