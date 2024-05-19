@@ -1,43 +1,18 @@
 package main
 
 import (
-	"context"
-	"log"
-	"net/http"
-
 	"github.com/MikeB1124/trimana-dashboard-api/controllers"
-	"github.com/aws/aws-lambda-go/events"
+	"github.com/aquasecurity/lmdrouter"
 	"github.com/aws/aws-lambda-go/lambda"
 )
 
-func handler(ctx context.Context, event events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	log.Printf("%+v", event)
+var router *lmdrouter.Router
 
-	var response events.APIGatewayProxyResponse
-	switch event.Path {
-	case "/hello":
-		if event.HTTPMethod == "GET" {
-			response = controllers.HelloController(event)
-		}
-	case "/goodbye":
-		if event.HTTPMethod == "GET" {
-			response = controllers.GoodbyeController(event)
-		}
-	case "/custom":
-		if event.HTTPMethod == "GET" {
-			response = controllers.CustomController(event)
-		} else if event.HTTPMethod == "POST" {
-			response = controllers.CustomPostController(event)
-		}
-	default:
-		response = events.APIGatewayProxyResponse{
-			StatusCode: http.StatusNotFound,
-			Body:       "\"Not found\"",
-		}
-	}
-	return response, nil
+func init() {
+	router = lmdrouter.NewRouter("")
+	router.Route("GET", "/poynt/sales", controllers.GetPoyntSalesByDate)
 }
 
 func main() {
-	lambda.Start(handler)
+	lambda.Start(router.Handler)
 }
