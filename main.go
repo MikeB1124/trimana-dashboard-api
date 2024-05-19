@@ -10,7 +10,7 @@ var router *lmdrouter.Router
 
 func init() {
 	router = lmdrouter.NewRouter("")
-	router.Route("GET", "/poynt/sales", controllers.GetPoyntSalesByDate)
+	router.Route("GET", "/poynt/transactions", controllers.GetPoyntTransactions)
 }
 
 func main() {
