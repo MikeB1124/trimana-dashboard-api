@@ -39,6 +39,21 @@ func EmailCSVPayrollReport(csvBuffer *bytes.Buffer, filename string, payrollReco
 	return nil
 }
 
+func PayrollActivityEvent(subject string, body string) error {
+	m := gomail.NewMessage()
+	m.SetHeader("From", configuration.Config.GmailConfig.FromAddress)
+	m.SetHeader("To", "balianmichael@gmail.com")
+	m.SetHeader("Subject", subject)
+	m.SetBody("text/plain", body)
+
+	// Send the email
+	if err := SendEmail(m); err != nil {
+		return err
+	}
+	return nil
+
+}
+
 func SendEmail(m *gomail.Message) error {
 	gmailConfig := configuration.Config.GmailConfig
 	// SMTP configuration

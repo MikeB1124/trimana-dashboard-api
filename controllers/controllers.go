@@ -35,7 +35,7 @@ func PayrollEvent(ctx context.Context, event events.APIGatewayProxyRequest) (eve
 	//Get employee by card ID scanned
 	employee, err := payroll.GetEmployeeByCardID(request.CardID)
 	if err != nil {
-		return createResponse(payroll.Response{StatusCode: 500, Result: "Error getting employee: " + err.Error()})
+		return createResponse(payroll.Response{StatusCode: 500, Result: fmt.Sprintf("Error getting employee by card ID (%s): %s", request.CardID, err.Error())})
 	}
 	log.Printf("Employee Found: %+v\n", employee)
 
@@ -52,6 +52,10 @@ func PayrollEvent(ctx context.Context, event events.APIGatewayProxyRequest) (eve
 			return createResponse(payroll.Response{StatusCode: 500, Result: "Error creating time card: " + err.Error()})
 		}
 		log.Printf("New Time Card Created for %s at %s\n", employee.Name, dateNow)
+		if err := email.PayrollActivityEvent(fmt.Sprintf("%s Has Checked In", employee.Name), "New Time Card Created For the Day"); err != nil {
+			log.Printf("Error sending email: %v\n", err)
+			return createResponse(payroll.Response{StatusCode: 500, Result: "Error sending email: " + err.Error()})
+		}
 		return createResponse(payroll.Response{StatusCode: 200, Result: fmt.Sprintf("New Time Card Created for %s at %s", employee.Name, dateNow)})
 	} else {
 		result, err := payroll.StampTimeCard(timeCardToday)
@@ -59,7 +63,12 @@ func PayrollEvent(ctx context.Context, event events.APIGatewayProxyRequest) (eve
 			log.Printf("Error stamping time card: %v\n", err)
 			return createResponse(payroll.Response{StatusCode: 500, Result: "Error stamping time card: " + err.Error()})
 		}
-		log.Printf("%s has %s\n", employee.Name, result)
+		activity := fmt.Sprintf("%s Has %s", employee.Name, result)
+		log.Println(activity)
+		if err := email.PayrollActivityEvent(activity, ""); err != nil {
+			log.Printf("Error sending email: %v\n", err)
+			return createResponse(payroll.Response{StatusCode: 500, Result: "Error sending email: " + err.Error()})
+		}
 		return createResponse(payroll.Response{StatusCode: 200, Result: fmt.Sprintf("%s has %s", employee.Name, result)})
 	}
 }
