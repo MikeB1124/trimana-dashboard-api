@@ -10,8 +10,8 @@ var router *lmdrouter.Router
 
 func init() {
 	router = lmdrouter.NewRouter("")
-	router.Route("POST", "/trimana/payroll/event", controllers.PayrollEvent)
-	router.Route("POST", "/trimana/payroll/report", controllers.PayrollReport)
+	router.Route("POST", "/payroll/event", controllers.PayrollEvent)
+	router.Route("POST", "/payroll/report", controllers.PayrollReport)
 }
 
 func main() {
