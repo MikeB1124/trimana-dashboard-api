@@ -37,7 +37,7 @@ jobs:
 
     # Upload zip artifact so that the s3 upload job can use it
     - name: Upload artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: lambda-package
         path: ${{ env.ZIP_FILE_NAME }}
@@ -50,7 +50,7 @@ jobs:
     steps:
     # Download zip file that was uploaded from the build stage
     - name: Download artifact
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v4
       with:
         name: lambda-package
 
