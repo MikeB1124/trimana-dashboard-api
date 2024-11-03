@@ -1,24 +1,18 @@
 package csv
 
 import (
+	"bytes"
 	"encoding/csv"
 	"fmt"
-	"os"
 	"strconv"
 
 	"github.com/MikeB1124/trimana-dashboard-api/payroll"
 )
 
-func WriteCSV(fileName string, payrollRecords []payroll.EmployeePayrollRecord) error {
-	file, err := os.Create(fileName)
-	if err != nil {
-		return fmt.Errorf("Error creating file: %v", err)
-	}
-	defer file.Close()
-
-	// Initialize CSV writer
-	writer := csv.NewWriter(file)
-	defer writer.Flush()
+func WriteCSV(payrollRecords []payroll.EmployeePayrollRecord) (*bytes.Buffer, error) {
+	// Write CSV data to a buffer instead of a file
+	var buffer bytes.Buffer
+	writer := csv.NewWriter(&buffer)
 
 	// Write header
 	header := []string{
@@ -27,7 +21,7 @@ func WriteCSV(fileName string, payrollRecords []payroll.EmployeePayrollRecord) e
 		"Hours", "Dollars", "Separate", "Rate Code",
 	}
 	if err := writer.Write(header); err != nil {
-		return fmt.Errorf("Error writing header: %v", err)
+		return nil, fmt.Errorf("Error writing header: %v", err)
 	}
 
 	for _, record := range payrollRecords {
@@ -44,9 +38,15 @@ func WriteCSV(fileName string, payrollRecords []payroll.EmployeePayrollRecord) e
 			"BASE",
 		}
 		if err := writer.Write(row); err != nil {
-			return fmt.Errorf("Error writing record: %v", err)
+			return nil, fmt.Errorf("Error writing record: %v", err)
 		}
 	}
 
-	return nil
+	writer.Flush()
+
+	if err := writer.Error(); err != nil {
+		return nil, fmt.Errorf("Error flushing writer: %v", err)
+	}
+
+	return &buffer, nil
 }

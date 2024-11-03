@@ -1,7 +1,9 @@
 package email
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"time"
 
 	"github.com/MikeB1124/trimana-dashboard-api/configuration"
@@ -9,7 +11,7 @@ import (
 	"gopkg.in/gomail.v2"
 )
 
-func EmailCSVPayrollReport(filename string, payrollRecords []payroll.EmployeePayrollRecord, startPayPeriod time.Time, endPayPeriod time.Time) error {
+func EmailCSVPayrollReport(csvBuffer *bytes.Buffer, filename string, payrollRecords []payroll.EmployeePayrollRecord, startPayPeriod time.Time, endPayPeriod time.Time) error {
 	// Send email logic here
 	m := gomail.NewMessage()
 
@@ -24,8 +26,11 @@ func EmailCSVPayrollReport(filename string, payrollRecords []payroll.EmployeePay
 	m.SetHeader("Subject", subject)
 	m.SetBody("text/plain", buildPayrollRecordBody(payrollRecords))
 
-	// Attach the CSV file
-	m.Attach(filename)
+	// Attach the CSV file from the buffer
+	m.Attach(filename, gomail.SetCopyFunc(func(w io.Writer) error {
+		_, err := w.Write(csvBuffer.Bytes())
+		return err
+	}))
 
 	// Send the email
 	if err := SendEmail(m); err != nil {

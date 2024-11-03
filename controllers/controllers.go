@@ -117,19 +117,20 @@ func PayrollReport(ctx context.Context, event events.APIGatewayProxyRequest) (ev
 		log.Printf("Payroll for %s: Hours: %.2f, Total: %.2f\n", employee.Name, totalHours, totalPay)
 	}
 
+	// Write payroll records to CSV buffer
+	csvBuffer, err := csv.WriteCSV(employeePayrollsRecords)
+	if err != nil {
+		log.Printf("Error writing CSV: %v\n", err)
+		return createResponse(payroll.Response{StatusCode: 500, Result: "Error writing CSV: " + err.Error()})
+	}
+	log.Printf("CSV buffer created\n")
+
 	csvFileName := fmt.Sprintf("Biweekly-%02d%02d%d-%02d%02d%d.csv",
 		startPayPeriod.Month(), startPayPeriod.Day(), startPayPeriod.Year(),
 		endPayPeriod.Month(), endPayPeriod.Day(), endPayPeriod.Year(),
 	)
 
-	// Write payroll records to CSV
-	if err := csv.WriteCSV(csvFileName, employeePayrollsRecords); err != nil {
-		log.Printf("Error writing CSV: %v\n", err)
-		return createResponse(payroll.Response{StatusCode: 500, Result: "Error writing CSV: " + err.Error()})
-	}
-	log.Printf("CSV file created: %s\n", csvFileName)
-
-	if err := email.EmailCSVPayrollReport(csvFileName, employeePayrollsRecords, startPayPeriod, endPayPeriod); err != nil {
+	if err := email.EmailCSVPayrollReport(csvBuffer, csvFileName, employeePayrollsRecords, startPayPeriod, endPayPeriod); err != nil {
 		log.Printf("Error sending email: %v\n", err)
 		return createResponse(payroll.Response{StatusCode: 500, Result: "Error sending email: " + err.Error()})
 	}
