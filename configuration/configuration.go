@@ -12,14 +12,19 @@ import (
 )
 
 type Configration struct {
-	Poynt PoyntConfigration `json:"poynt"`
+	MongoDB     MongoDB     `json:"mongodb"`
+	GmailConfig GmailConfig `json:"gmail"`
+}
+type MongoDB struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
 }
 
-type PoyntConfigration struct {
-	URL           string `json:"api_url"`
-	ApplicationID string `json:"application_id"`
-	BusinessID    string `json:"business_id"`
-	PrivateKey    string `json:"private_key"`
+type GmailConfig struct {
+	FromAddress string `json:"fromAddress"`
+	Password    string `json:"password"`
+	Host        string `json:"host"`
+	Port        int    `json:"port"`
 }
 
 var Config Configration
