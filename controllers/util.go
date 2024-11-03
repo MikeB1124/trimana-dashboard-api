@@ -19,7 +19,7 @@ func createResponse(response payroll.Response) (events.APIGatewayProxyResponse, 
 	}
 
 	if response.StatusCode > 200 {
-		if err := email.PayrollActivityEvent("Trimana Payroll Error", response.Result); err != nil {
+		if err := email.PayrollActivityEvent("Trimana Payroll Error", response.Result, ""); err != nil {
 			responseBody, _ = json.Marshal(payroll.Response{Result: err.Error()})
 			return events.APIGatewayProxyResponse{
 				StatusCode: 500,

@@ -12,6 +12,7 @@ type Employee struct {
 	EmployeeID string  `json:"employeeID" bson:"employeeID"`
 	HourlyRate float64 `json:"hourlyRate" bson:"hourlyRate"`
 	CardID     string  `json:"cardID" bson:"cardID"`
+	Email      string  `json:"email" bson:"email"`
 }
 
 type TimeCard struct {

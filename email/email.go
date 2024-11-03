@@ -39,10 +39,14 @@ func EmailCSVPayrollReport(csvBuffer *bytes.Buffer, filename string, payrollReco
 	return nil
 }
 
-func PayrollActivityEvent(subject string, body string) error {
+func PayrollActivityEvent(subject string, body string, employeeEmail string) error {
 	m := gomail.NewMessage()
 	m.SetHeader("From", configuration.Config.GmailConfig.FromAddress)
-	m.SetHeader("To", "trimanaucla@gmail.com")
+	to := []string{"trimanaucla@gmail.com"}
+	if employeeEmail != "" {
+		to = append(to, employeeEmail)
+	}
+	m.SetHeader("To", to...)
 	m.SetHeader("Subject", subject)
 	m.SetBody("text/plain", body)
 

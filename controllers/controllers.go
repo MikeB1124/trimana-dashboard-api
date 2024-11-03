@@ -52,7 +52,7 @@ func PayrollEvent(ctx context.Context, event events.APIGatewayProxyRequest) (eve
 			return createResponse(payroll.Response{StatusCode: 500, Result: "Error creating time card: " + err.Error()})
 		}
 		log.Printf("New Time Card Created for %s at %s\n", employee.Name, dateNow)
-		if err := email.PayrollActivityEvent(fmt.Sprintf("%s Has Checked In", employee.Name), "New Time Card Created For the Day"); err != nil {
+		if err := email.PayrollActivityEvent(fmt.Sprintf("%s Has Checked In", employee.Name), "New Time Card Created For the Day", employee.Email); err != nil {
 			log.Printf("Error sending email: %v\n", err)
 			return createResponse(payroll.Response{StatusCode: 500, Result: "Error sending email: " + err.Error()})
 		}
@@ -65,7 +65,7 @@ func PayrollEvent(ctx context.Context, event events.APIGatewayProxyRequest) (eve
 		}
 		activity := fmt.Sprintf("%s Has %s", employee.Name, result)
 		log.Println(activity)
-		if err := email.PayrollActivityEvent(activity, ""); err != nil {
+		if err := email.PayrollActivityEvent(activity, "", employee.Email); err != nil {
 			log.Printf("Error sending email: %v\n", err)
 			return createResponse(payroll.Response{StatusCode: 500, Result: "Error sending email: " + err.Error()})
 		}
