@@ -126,6 +126,11 @@ func PayrollReport(ctx context.Context, event events.APIGatewayProxyRequest) (ev
 		log.Printf("Payroll for %s: Hours: %.2f, Total: %.2f\n", employee.Name, totalHours, totalPay)
 	}
 
+	if len(employeePayrollsRecords) == 0 {
+		log.Printf("No payroll records to process\n")
+		return createResponse(payroll.Response{StatusCode: 200, Result: "No payroll records to process"})
+	}
+
 	// Write payroll records to CSV buffer
 	csvBuffer, err := csv.WriteCSV(employeePayrollsRecords)
 	if err != nil {
