@@ -8,9 +8,13 @@ import (
 
 type Employee struct {
 	ID         string  `json:"id" bson:"_id"`
+	BranchID string `json:"branchID" bson:"branchID"`
 	Name       string  `json:"name" bson:"name"`
 	EmployeeID string  `json:"employeeID" bson:"employeeID"`
 	HourlyRate float64 `json:"hourlyRate" bson:"hourlyRate"`
+	PayFrequency string `json:"payFrequency" bson:"payFrequency"`
+	EarningsCode string `json:"earningsCode" bson:"earningsCode"`
+	RateCode string `json:"rateCode" bson:"rateCode"`
 	CardID     string  `json:"cardID" bson:"cardID"`
 	Email      string  `json:"email" bson:"email"`
 }

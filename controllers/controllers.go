@@ -112,6 +112,11 @@ func PayrollReport(ctx context.Context, event events.APIGatewayProxyRequest) (ev
 			}
 		}
 
+		if totalHours == 0.0 {
+			log.Printf("%s did not work any hours for pay period %s - %s\n", employee.Name, startPayPeriod, endPayPeriod)
+			continue
+		}
+
 		totalPay := math.Round((totalHours*employee.HourlyRate)*100) / 100
 
 		employeePayrollsRecords = append(employeePayrollsRecords, payroll.EmployeePayrollRecord{

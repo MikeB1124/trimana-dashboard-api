@@ -16,9 +16,9 @@ func WriteCSV(payrollRecords []payroll.EmployeePayrollRecord) (*bytes.Buffer, er
 
 	// Write header
 	header := []string{
-		"Branch Code", "Pay Frequency", "Pay Period Start Date",
-		"Pay Period End Date", "Employee Id", "Earnings",
-		"Hours", "Dollars", "Separate", "Rate Code",
+		"IID", "Pay Frequency", "Pay Period Start",
+		"Pay Period End", "Employee Id", "Earnings Code",
+		"Pay Hours", "Dollars", "Separate Check", "Worked In Dept, Rate Code",
 	}
 	if err := writer.Write(header); err != nil {
 		return nil, fmt.Errorf("Error writing header: %v", err)
