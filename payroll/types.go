@@ -7,16 +7,16 @@ import (
 )
 
 type Employee struct {
-	ID         string  `json:"id" bson:"_id"`
-	BranchID string `json:"branchID" bson:"branchID"`
-	Name       string  `json:"name" bson:"name"`
-	EmployeeID string  `json:"employeeID" bson:"employeeID"`
-	HourlyRate float64 `json:"hourlyRate" bson:"hourlyRate"`
-	PayFrequency string `json:"payFrequency" bson:"payFrequency"`
-	EarningsCode string `json:"earningsCode" bson:"earningsCode"`
-	RateCode string `json:"rateCode" bson:"rateCode"`
-	CardID     string  `json:"cardID" bson:"cardID"`
-	Email      string  `json:"email" bson:"email"`
+	ID           string  `json:"id" bson:"_id"`
+	BranchID     string  `json:"branchID" bson:"branchID"`
+	Name         string  `json:"name" bson:"name"`
+	EmployeeID   string  `json:"employeeID" bson:"employeeID"`
+	HourlyRate   float64 `json:"hourlyRate" bson:"hourlyRate"`
+	PayFrequency string  `json:"payFrequency" bson:"payFrequency"`
+	EarningsCode string  `json:"earningsCode" bson:"earningsCode"`
+	RateCode     string  `json:"rateCode" bson:"rateCode"`
+	CardID       string  `json:"cardID" bson:"cardID"`
+	Email        string  `json:"email" bson:"email"`
 }
 
 type TimeCard struct {
@@ -37,11 +37,9 @@ type Response struct {
 }
 
 type EmployeePayrollRecord struct {
-	Name       string    `json:"name"`
-	EmployeeID string    `json:"employeeID"`
-	Hours      float64   `json:"hours"`
-	Total      float64   `json:"total"`
-	HourlyRate float64   `json:"hourlyRate"`
-	StartDate  time.Time `json:"startDate"`
-	EndDate    time.Time `json:"endDate"`
+	EmployeeInfo Employee  `json:"employeeInfo"`
+	Hours        float64   `json:"hours"`
+	Total        float64   `json:"total"`
+	StartDate    time.Time `json:"startDate"`
+	EndDate      time.Time `json:"endDate"`
 }

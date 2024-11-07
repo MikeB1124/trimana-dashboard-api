@@ -14,6 +14,10 @@ func WriteCSV(payrollRecords []payroll.EmployeePayrollRecord) (*bytes.Buffer, er
 	var buffer bytes.Buffer
 	writer := csv.NewWriter(&buffer)
 
+	if err := writer.Write([]string{"##GENERIC## V1.0"}); err != nil {
+		return nil, fmt.Errorf("Error writing heaversion headerder: %v", err)
+	}
+
 	// Write header
 	header := []string{
 		"IID", "Pay Frequency", "Pay Period Start",
@@ -26,16 +30,17 @@ func WriteCSV(payrollRecords []payroll.EmployeePayrollRecord) (*bytes.Buffer, er
 
 	for _, record := range payrollRecords {
 		row := []string{
-			"ABCDEFG",
-			"B",
+			record.EmployeeInfo.BranchID,
+			record.EmployeeInfo.PayFrequency,
 			fmt.Sprintf("%02d/%02d/%d", record.StartDate.Month(), record.StartDate.Day(), record.StartDate.Year()),
 			fmt.Sprintf("%02d/%02d/%d", record.EndDate.Month(), record.EndDate.Day(), record.EndDate.Year()),
-			record.EmployeeID,
-			"REG",
+			record.EmployeeInfo.EmployeeID,
+			record.EmployeeInfo.EarningsCode,
 			strconv.FormatFloat(record.Hours, 'f', 2, 64),
 			strconv.FormatFloat(record.Total, 'f', 2, 64),
 			"0",
-			"BASE",
+			"",
+			record.EmployeeInfo.RateCode,
 		}
 		if err := writer.Write(row); err != nil {
 			return nil, fmt.Errorf("Error writing record: %v", err)

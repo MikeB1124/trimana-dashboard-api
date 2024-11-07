@@ -73,10 +73,10 @@ func SendEmail(m *gomail.Message) error {
 func buildPayrollRecordBody(payrollRecords []payroll.EmployeePayrollRecord) string {
 	body := "Employee Payroll Records\n\n"
 	for _, record := range payrollRecords {
-		body += fmt.Sprintf("Name: %s\n", record.Name)
-		body += fmt.Sprintf("Employee ID: %s\n", record.EmployeeID)
+		body += fmt.Sprintf("Name: %s\n", record.EmployeeInfo.Name)
+		body += fmt.Sprintf("Employee ID: %s\n", record.EmployeeInfo.EmployeeID)
 		body += fmt.Sprintf("Hours: %.2f\n", record.Hours)
-		body += fmt.Sprintf("Hourly Rate: $%.2f\n", record.HourlyRate)
+		body += fmt.Sprintf("Hourly Rate: $%.2f\n", record.EmployeeInfo.HourlyRate)
 		body += fmt.Sprintf("Total: $%.2f\n", record.Total)
 		body += "\n"
 	}

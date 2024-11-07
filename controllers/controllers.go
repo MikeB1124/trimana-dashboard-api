@@ -120,13 +120,11 @@ func PayrollReport(ctx context.Context, event events.APIGatewayProxyRequest) (ev
 		totalPay := math.Round((totalHours*employee.HourlyRate)*100) / 100
 
 		employeePayrollsRecords = append(employeePayrollsRecords, payroll.EmployeePayrollRecord{
-			Name:       employee.Name,
-			EmployeeID: employee.EmployeeID,
-			Hours:      math.Round(totalHours*100) / 100,
-			HourlyRate: employee.HourlyRate,
-			Total:      totalPay,
-			StartDate:  startPayPeriod,
-			EndDate:    endPayPeriod,
+			EmployeeInfo: employee,
+			Hours:        math.Round(totalHours*100) / 100,
+			Total:        totalPay,
+			StartDate:    startPayPeriod,
+			EndDate:      endPayPeriod,
 		})
 		log.Printf("Payroll for %s: Hours: %.2f, Total: %.2f\n", employee.Name, totalHours, totalPay)
 	}
