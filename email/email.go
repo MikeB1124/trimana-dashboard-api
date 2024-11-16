@@ -72,7 +72,8 @@ func SendEmail(m *gomail.Message) error {
 
 func buildPayrollRecordBody(payrollRecords []payroll.EmployeePayrollRecord) string {
 	var payrollTotals payroll.PayrollTotals
-	body := "Employee Payroll Records\n\n"
+	header := "Employee Payroll Records\n\n"
+	body := ""
 	for _, record := range payrollRecords {
 		payrollTotals.TotalHours += record.Hours
 		payrollTotals.TotalPay += record.Total
@@ -84,11 +85,11 @@ func buildPayrollRecordBody(payrollRecords []payroll.EmployeePayrollRecord) stri
 		body += "\n"
 	}
 	payrollTotals.AverageRate = payrollTotals.TotalPay / payrollTotals.TotalHours
-	body += "-------------\n"
-	body += "Payroll Totals\n"
-	body += "-------------\n"
-	body += fmt.Sprintf("Total Hours: %.2f\n", payrollTotals.TotalHours)
-	body += fmt.Sprintf("Average Hourly Rate: $%.2f\n", payrollTotals.AverageRate)
-	body += fmt.Sprintf("Total Pay: $%.2f\n", payrollTotals.TotalPay)
-	return body
+	header += "-------------\n"
+	header += "Payroll Totals\n"
+	header += "-------------\n"
+	header += fmt.Sprintf("Total Hours: %.2f\n", payrollTotals.TotalHours)
+	header += fmt.Sprintf("Average Hourly Rate: $%.2f\n", payrollTotals.AverageRate)
+	header += fmt.Sprintf("Total Pay: $%.2f\n", payrollTotals.TotalPay)
+	return header + body
 }
