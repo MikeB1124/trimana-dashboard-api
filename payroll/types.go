@@ -43,3 +43,9 @@ type EmployeePayrollRecord struct {
 	StartDate    time.Time `json:"startDate"`
 	EndDate      time.Time `json:"endDate"`
 }
+
+type PayrollTotals struct {
+	TotalHours  float64 `json:"totalHours"`
+	AverageRate float64 `json:"averageRate"`
+	TotalPay    float64 `json:"totalPay"`
+}
