@@ -90,6 +90,6 @@ func buildPayrollRecordBody(payrollRecords []payroll.EmployeePayrollRecord) stri
 	header += "-------------\n"
 	header += fmt.Sprintf("Total Hours: %.2f\n", payrollTotals.TotalHours)
 	header += fmt.Sprintf("Average Hourly Rate: $%.2f\n", payrollTotals.AverageRate)
-	header += fmt.Sprintf("Total Pay: $%.2f\n", payrollTotals.TotalPay)
+	header += fmt.Sprintf("Total Pay: $%.2f\n\n\n", payrollTotals.TotalPay)
 	return header + body
 }
