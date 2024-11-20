@@ -36,7 +36,7 @@ func WriteCSV(payrollRecords []payroll.EmployeePayrollRecord) (*bytes.Buffer, er
 			fmt.Sprintf("%02d/%02d/%d", record.EndDate.Month(), record.EndDate.Day(), record.EndDate.Year()),
 			record.EmployeeInfo.EmployeeID,
 			record.EmployeeInfo.EarningsCode,
-			strconv.FormatFloat(record.Hours, 'f', 2, 64),
+			strconv.FormatFloat(record.TotalPayPeriodHours, 'f', 2, 64),
 			strconv.FormatFloat(record.Total, 'f', 2, 64),
 			"0",
 			"",

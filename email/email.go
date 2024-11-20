@@ -75,21 +75,24 @@ func buildPayrollRecordBody(payrollRecords []payroll.EmployeePayrollRecord) stri
 	header := "Employee Payroll Records\n\n"
 	body := ""
 	for _, record := range payrollRecords {
-		payrollTotals.TotalHours += record.Hours
+		payrollTotals.TotalPayPeriodHours += record.TotalPayPeriodHours
+		payrollTotals.TotalDayHours += record.TotalDayHours
 		payrollTotals.TotalPay += record.Total
 		body += fmt.Sprintf("Name: %s\n", record.EmployeeInfo.Name)
 		body += fmt.Sprintf("Employee ID: %s\n", record.EmployeeInfo.EmployeeID)
-		body += fmt.Sprintf("Hours: %.2f\n", record.Hours)
+		body += fmt.Sprintf("Total Pay Period Hours: %.2f\n", record.TotalPayPeriodHours)
+		body += fmt.Sprintf("Hours for Today: %.2f\n", record.TotalDayHours)
 		body += fmt.Sprintf("Hourly Rate: $%.2f\n", record.EmployeeInfo.HourlyRate)
 		body += fmt.Sprintf("Total: $%.2f\n", record.Total)
 		body += "\n"
 	}
-	payrollTotals.AverageRate = payrollTotals.TotalPay / payrollTotals.TotalHours
+	payrollTotals.AverageRate = payrollTotals.TotalPay / payrollTotals.TotalPayPeriodHours
 	header += "-------------\n"
 	header += "Payroll Totals\n"
 	header += "-------------\n"
-	header += fmt.Sprintf("Total Hours: %.2f\n", payrollTotals.TotalHours)
-	header += fmt.Sprintf("Average Hourly Rate: $%.2f\n", payrollTotals.AverageRate)
-	header += fmt.Sprintf("Total Pay: $%.2f\n\n\n", payrollTotals.TotalPay)
+	header += fmt.Sprintf("Total Hours for Pay Period: %.2f\n", payrollTotals.TotalPayPeriodHours)
+	header += fmt.Sprintf("Total Hours for Today: %.2f\n", payrollTotals.TotalDayHours)
+	header += fmt.Sprintf("Pay Period Average Hourly Rate: $%.2f\n", payrollTotals.AverageRate)
+	header += fmt.Sprintf("Total Pay for Pay Period: $%.2f\n\n\n", payrollTotals.TotalPay)
 	return header + body
 }

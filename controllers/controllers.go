@@ -104,10 +104,15 @@ func PayrollReport(ctx context.Context, event events.APIGatewayProxyRequest) (ev
 
 		// Calculate total hours and total pay
 		totalHours := 0.0
+		totalDayHours := 0.0
 		for _, timeCard := range timeCards {
 			for _, block := range timeCard.TimeBlocks {
 				if !block.CheckOut.IsZero() {
 					totalHours += block.CheckOut.Sub(block.CheckIn).Hours()
+					//Match date for today
+					if block.CheckIn.Month() == dateNow.Month() && block.CheckIn.Day() == dateNow.Day() && block.CheckIn.Year() == dateNow.Year() {
+						totalDayHours += block.CheckOut.Sub(block.CheckIn).Hours()
+					}
 				}
 			}
 		}
@@ -120,11 +125,12 @@ func PayrollReport(ctx context.Context, event events.APIGatewayProxyRequest) (ev
 		totalPay := math.Round((totalHours*employee.HourlyRate)*100) / 100
 
 		employeePayrollsRecords = append(employeePayrollsRecords, payroll.EmployeePayrollRecord{
-			EmployeeInfo: employee,
-			Hours:        math.Round(totalHours*100) / 100,
-			Total:        totalPay,
-			StartDate:    startPayPeriod,
-			EndDate:      endPayPeriod,
+			EmployeeInfo:        employee,
+			TotalPayPeriodHours: math.Round(totalHours*100) / 100,
+			TotalDayHours:       math.Round(totalDayHours*100) / 100,
+			Total:               totalPay,
+			StartDate:           startPayPeriod,
+			EndDate:             endPayPeriod,
 		})
 		log.Printf("Payroll for %s: Hours: %.2f, Total: %.2f\n", employee.Name, totalHours, totalPay)
 	}

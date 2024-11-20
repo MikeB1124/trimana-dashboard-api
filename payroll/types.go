@@ -37,15 +37,17 @@ type Response struct {
 }
 
 type EmployeePayrollRecord struct {
-	EmployeeInfo Employee  `json:"employeeInfo"`
-	Hours        float64   `json:"hours"`
-	Total        float64   `json:"total"`
-	StartDate    time.Time `json:"startDate"`
-	EndDate      time.Time `json:"endDate"`
+	EmployeeInfo        Employee  `json:"employeeInfo"`
+	TotalPayPeriodHours float64   `json:"totalPayPeriodHours"`
+	TotalDayHours       float64   `json:"totalDayHours"`
+	Total               float64   `json:"total"`
+	StartDate           time.Time `json:"startDate"`
+	EndDate             time.Time `json:"endDate"`
 }
 
 type PayrollTotals struct {
-	TotalHours  float64 `json:"totalHours"`
-	AverageRate float64 `json:"averageRate"`
-	TotalPay    float64 `json:"totalPay"`
+	TotalPayPeriodHours float64 `json:"totalPayPeriodHours"`
+	TotalDayHours       float64 `json:"totalDayHours"`
+	AverageRate         float64 `json:"averageRate"`
+	TotalPay            float64 `json:"totalPay"`
 }
