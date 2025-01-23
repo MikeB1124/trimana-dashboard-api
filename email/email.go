@@ -65,7 +65,7 @@ func DailyHoursLowEvent(employeeName string, hoursForDay float64, employeeEmail 
 	if employeeEmail != "" {
 		to = append(to, employeeEmail)
 	}
-	subject := fmt.Sprintf("Daily Hours for %s < 5.0 Hours", employeeName)
+	subject := fmt.Sprintf("Low Hours for %s < 5.0 Hours", employeeName)
 	body := fmt.Sprintf("%s worked %.2f hours today", employeeName, hoursForDay)
 	m.SetHeader("To", to...)
 	m.SetHeader("Subject", subject)

@@ -112,14 +112,15 @@ func PayrollReport(ctx context.Context, event events.APIGatewayProxyRequest) (ev
 					//Match date for today
 					if block.CheckIn.Month() == dateNow.Month() && block.CheckIn.Day() == dateNow.Day() && block.CheckIn.Year() == dateNow.Year() {
 						totalDayHours += block.CheckOut.Sub(block.CheckIn).Hours()
-						if totalDayHours < 5.0 {
-							log.Printf("%s worked less than 5 hours today\n", employee.Name)
-							if err := email.DailyHoursLowEvent(employee.Name, totalDayHours, employee.Email); err != nil {
-								log.Printf("Error sending low hours alert for %s: %v\n", employee.Name, err)
-							}
-						}
 					}
 				}
+			}
+		}
+
+		if totalDayHours < 5.0 {
+			log.Printf("%s worked less than 5 hours today\n", employee.Name)
+			if err := email.DailyHoursLowEvent(employee.Name, totalDayHours, employee.Email); err != nil {
+				log.Printf("Error sending low hours alert for %s: %v\n", employee.Name, err)
 			}
 		}
 
