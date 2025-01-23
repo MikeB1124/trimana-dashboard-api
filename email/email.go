@@ -58,6 +58,24 @@ func PayrollActivityEvent(subject string, body string, employeeEmail string) err
 
 }
 
+func DailyHoursLowEvent(employeeName string, hoursForDay float64, employeeEmail string) error {
+	m := gomail.NewMessage()
+	m.SetHeader("From", configuration.Config.GmailConfig.FromAddress)
+	to := []string{"trimanaucla@gmail.com"}
+	if employeeEmail != "" {
+		to = append(to, employeeEmail)
+	}
+	subject := fmt.Sprintf("Daily Hours for %s < 5.0 Hours", employeeName)
+	body := fmt.Sprintf("%s worked %.2f hours today", employeeName, hoursForDay)
+	m.SetHeader("To", to...)
+	m.SetHeader("Subject", subject)
+	m.SetBody("text/plain", body)
+	if err := SendEmail(m); err != nil {
+		return err
+	}
+	return nil
+}
+
 func SendEmail(m *gomail.Message) error {
 	gmailConfig := configuration.Config.GmailConfig
 	// SMTP configuration
