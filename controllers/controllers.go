@@ -117,16 +117,19 @@ func PayrollReport(ctx context.Context, event events.APIGatewayProxyRequest) (ev
 			}
 		}
 
-		if totalDayHours < 5.0 {
-			log.Printf("%s worked less than 5 hours today\n", employee.Name)
-			if err := email.DailyHoursLowEvent(employee.Name, totalDayHours, employee.Email); err != nil {
-				log.Printf("Error sending low hours alert for %s: %v\n", employee.Name, err)
-			}
-		}
-
 		if totalHours == 0.0 {
 			log.Printf("%s did not work any hours for pay period %s - %s\n", employee.Name, startPayPeriod, endPayPeriod)
 			continue
+		}
+
+		// Don't run outside of business hours
+		if dateNow.Weekday() != time.Saturday && dateNow.Weekday() != time.Sunday {
+			if totalDayHours < 5.0 {
+				log.Printf("%s worked less than 5 hours today\n", employee.Name)
+				if err := email.DailyHoursLowEvent(employee.Name, totalDayHours, employee.Email); err != nil {
+					log.Printf("Error sending low hours alert for %s: %v\n", employee.Name, err)
+				}
+			}
 		}
 
 		totalPay := math.Round((totalHours*employee.HourlyRate)*100) / 100
