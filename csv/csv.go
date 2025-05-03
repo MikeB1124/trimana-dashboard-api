@@ -49,7 +49,7 @@ func WriteCSV(payrollRecords []payroll.EmployeePayrollRecord) (*bytes.Buffer, er
 
 	// Write header
 	header := []string{
-		"Employee Name", "Pay Period Start", "Pay Period End", "Pay Hours", "Dollars",
+		"Employee Name", "Pay Period Start", "Pay Period End", "Pay Rate", "Standard Hours", "Overtime Hours", "Total Standard Pay", "Total Overtime Pay", "Total Pay",
 	}
 	if err := writer.Write(header); err != nil {
 		return nil, fmt.Errorf("Error writing header: %v", err)
@@ -60,8 +60,12 @@ func WriteCSV(payrollRecords []payroll.EmployeePayrollRecord) (*bytes.Buffer, er
 			record.EmployeeInfo.Name,
 			fmt.Sprintf("%02d/%02d/%d", record.StartDate.Month(), record.StartDate.Day(), record.StartDate.Year()),
 			fmt.Sprintf("%02d/%02d/%d", record.EndDate.Month(), record.EndDate.Day(), record.EndDate.Year()),
-			strconv.FormatFloat(record.TotalPayPeriodHours, 'f', 2, 64),
-			strconv.FormatFloat(record.Total, 'f', 2, 64),
+			strconv.FormatFloat(record.EmployeeInfo.HourlyRate, 'f', 2, 64),
+			strconv.FormatFloat(record.TotalStandardHours, 'f', 2, 64),
+			strconv.FormatFloat(record.TotalOverTimeHours, 'f', 2, 64),
+			strconv.FormatFloat(record.TotalStandardPay, 'f', 2, 64),
+			strconv.FormatFloat(record.TotalOvertimePay, 'f', 2, 64),
+			strconv.FormatFloat(record.TotalPay, 'f', 2, 64),
 		}
 		if err := writer.Write(row); err != nil {
 			return nil, fmt.Errorf("Error writing record: %v", err)

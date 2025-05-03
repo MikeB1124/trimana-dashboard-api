@@ -100,24 +100,33 @@ func PayrollReport(ctx context.Context, event events.APIGatewayProxyRequest) (ev
 			log.Printf("Error getting time cards: %v\n", err)
 			return createResponse(payroll.Response{StatusCode: 500, Result: "Error getting time cards: " + err.Error()})
 		}
-		log.Printf("Time Cards for %s: %+v\n", employee.Name, timeCards)
+		// log.Printf("Time Cards for %s: %+v\n", employee.Name, timeCards)
 
 		// Calculate total hours and total pay
-		totalHours := 0.0
+		totalStandardHours := 0.0
 		totalDayHours := 0.0
+		totalOverTimeHours := 0.0
 		for _, timeCard := range timeCards {
+			overTimeHours := 0.0
 			for _, block := range timeCard.TimeBlocks {
 				if !block.CheckOut.IsZero() {
-					totalHours += block.CheckOut.Sub(block.CheckIn).Hours()
+					hoursForBlock := block.CheckOut.Sub(block.CheckIn).Hours()
+					totalStandardHours += hoursForBlock
+					overTimeHours += hoursForBlock
 					//Match date for today
 					if block.CheckIn.Month() == dateNow.Month() && block.CheckIn.Day() == dateNow.Day() && block.CheckIn.Year() == dateNow.Year() {
-						totalDayHours += block.CheckOut.Sub(block.CheckIn).Hours()
+						totalDayHours += hoursForBlock
 					}
 				}
 			}
+			if overTimeHours > 8.02 {
+				overTimeHours -= 8.0
+				totalOverTimeHours += overTimeHours
+				totalStandardHours -= overTimeHours
+				log.Printf("Overtime hours for %s: %.2f\n on %s", employee.Name, overTimeHours, timeCard.CreatedAt)
+			}
 		}
-
-		if totalHours == 0.0 {
+		if totalStandardHours == 0.0 {
 			log.Printf("%s did not work any hours for pay period %s - %s\n", employee.Name, startPayPeriod, endPayPeriod)
 			continue
 		}
@@ -130,19 +139,38 @@ func PayrollReport(ctx context.Context, event events.APIGatewayProxyRequest) (ev
 					log.Printf("Error sending low hours alert for %s: %v\n", employee.Name, err)
 				}
 			}
+			if totalDayHours > 8.02 {
+				log.Printf("%s worked more than 8 hours today\n", employee.Name)
+				if err := email.DailyHoursHighEvent(employee.Name, totalDayHours, employee.Email); err != nil {
+					log.Printf("Error sending high hours alert for %s: %v\n", employee.Name, err)
+				}
+			}
 		}
 
-		totalPay := math.Round((totalHours*employee.HourlyRate)*100) / 100
+		overtimeRate := 1.5 * employee.HourlyRate
+		totalOvertimePay := math.Round((totalOverTimeHours*overtimeRate)*100) / 100
+		totalStandardPay := math.Round((totalStandardHours*employee.HourlyRate)*100) / 100
 
 		employeePayrollsRecords = append(employeePayrollsRecords, payroll.EmployeePayrollRecord{
-			EmployeeInfo:        employee,
-			TotalPayPeriodHours: math.Round(totalHours*100) / 100,
-			TotalDayHours:       math.Round(totalDayHours*100) / 100,
-			Total:               totalPay,
-			StartDate:           startPayPeriod,
-			EndDate:             endPayPeriod,
+			EmployeeInfo:       employee,
+			TotalStandardHours: math.Round(totalStandardHours*100) / 100,
+			TotalDayHours:      math.Round(totalDayHours*100) / 100,
+			TotalOverTimeHours: math.Round(totalOverTimeHours*100) / 100,
+			TotalOvertimePay:   totalOvertimePay,
+			TotalStandardPay:   totalStandardPay,
+			TotalPay:           totalStandardPay + totalOvertimePay,
+			StartDate:          startPayPeriod,
+			EndDate:            endPayPeriod,
 		})
-		log.Printf("Payroll for %s: Hours: %.2f, Total: %.2f\n", employee.Name, totalHours, totalPay)
+		log.Printf(
+			"Payroll for %s: Standard Hours: %.2f, Overtime Hours: %.2f ,Total Standard Pay: %.2f, Total Overtime Pay: %.2f, Total Pay: %.2f\n",
+			employee.Name,
+			totalStandardHours,
+			totalOverTimeHours,
+			totalStandardPay,
+			totalOvertimePay,
+			totalStandardPay+totalOvertimePay,
+		)
 	}
 
 	if len(employeePayrollsRecords) == 0 {
