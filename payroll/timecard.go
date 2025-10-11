@@ -23,6 +23,54 @@ func GetTimeCardByDate(employeeID string, dateNow time.Time) (*TimeCard, error) 
 	return &timeCard, nil
 }
 
+func GetAllTimeCards() ([]TimeCard, error) {
+	collection := getTimeCardCollection()
+	cursor, err := collection.Find(context.Background(), bson.M{})
+	if err != nil {
+		return nil, err
+	}
+
+	var timeCards []TimeCard
+	if err = cursor.All(context.Background(), &timeCards); err != nil {
+		return nil, err
+	}
+
+	return timeCards, nil
+}
+
+func GetTimeCardByID(id string) (*TimeCard, error) {
+	collection := getTimeCardCollection()
+	objectID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, fmt.Errorf("invalid timecard ID")
+	}
+
+	var timeCard TimeCard
+	err = collection.FindOne(context.Background(), bson.M{"_id": objectID}).Decode(&timeCard)
+	if err == mongo.ErrNoDocuments {
+		return nil, fmt.Errorf("timecard not found")
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &timeCard, nil
+}
+
+func GetTimeCardsByEmployeeID(employeeID string) ([]TimeCard, error) {
+	collection := getTimeCardCollection()
+	cursor, err := collection.Find(context.Background(), bson.M{"employeeID": employeeID})
+	if err != nil {
+		return nil, err
+	}
+
+	var timeCards []TimeCard
+	if err = cursor.All(context.Background(), &timeCards); err != nil {
+		return nil, err
+	}
+
+	return timeCards, nil
+}
+
 func CreateNewTimeCard(employeeID string, dateNow time.Time) error {
 	newTimeCard := TimeCard{
 		ID:         primitive.NewObjectID(),
@@ -37,6 +85,68 @@ func CreateNewTimeCard(employeeID string, dateNow time.Time) error {
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+func CreateTimeCard(timeCard TimeCard) (*TimeCard, error) {
+	collection := getTimeCardCollection()
+
+	// Generate new ObjectID if not provided
+	if timeCard.ID.IsZero() {
+		timeCard.ID = primitive.NewObjectID()
+	}
+
+	_, err := collection.InsertOne(context.Background(), timeCard)
+	if err != nil {
+		return nil, err
+	}
+
+	return &timeCard, nil
+}
+
+func UpdateTimeCard(id string, timeCard TimeCard) (*TimeCard, error) {
+	collection := getTimeCardCollection()
+	objectID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, fmt.Errorf("invalid timecard ID")
+	}
+
+	update := bson.M{
+		"$set": bson.M{
+			"employeeID": timeCard.EmployeeID,
+			"createdAt":  timeCard.CreatedAt,
+			"timeBlocks": timeCard.TimeBlocks,
+		},
+	}
+
+	result, err := collection.UpdateOne(context.Background(), bson.M{"_id": objectID}, update)
+	if err != nil {
+		return nil, err
+	}
+
+	if result.MatchedCount == 0 {
+		return nil, fmt.Errorf("timecard not found")
+	}
+
+	return GetTimeCardByID(id)
+}
+
+func DeleteTimeCard(id string) error {
+	collection := getTimeCardCollection()
+	objectID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return fmt.Errorf("invalid timecard ID")
+	}
+
+	result, err := collection.DeleteOne(context.Background(), bson.M{"_id": objectID})
+	if err != nil {
+		return err
+	}
+
+	if result.DeletedCount == 0 {
+		return fmt.Errorf("timecard not found")
+	}
+
 	return nil
 }
 
