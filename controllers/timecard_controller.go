@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"log"
+	"time"
 
 	"github.com/MikeB1124/trimana-dashboard-api/payroll"
 	"github.com/aws/aws-lambda-go/events"
@@ -76,6 +77,10 @@ func CreateTimeCardManual(ctx context.Context, event events.APIGatewayProxyReque
 		return createResponse(payroll.Response{StatusCode: 400, Result: "Invalid request body"})
 	}
 
+	// Normalize createdAt to midnight in Pacific time (same as card scan)
+	createdDate := timeCard.CreatedAt.In(payroll.TimeZone)
+	timeCard.CreatedAt = time.Date(createdDate.Year(), createdDate.Month(), createdDate.Day(), 0, 0, 0, 0, payroll.TimeZone)
+
 	createdTimeCard, err := payroll.CreateTimeCard(timeCard)
 	if err != nil {
 		return createResponse(payroll.Response{StatusCode: 500, Result: "Error creating timecard: " + err.Error()})
@@ -105,6 +110,10 @@ func UpdateTimeCardManual(ctx context.Context, event events.APIGatewayProxyReque
 	if err != nil {
 		return createResponse(payroll.Response{StatusCode: 400, Result: "Invalid request body"})
 	}
+
+	// Normalize createdAt to midnight in Pacific time (same as card scan)
+	createdDate := timeCard.CreatedAt.In(payroll.TimeZone)
+	timeCard.CreatedAt = time.Date(createdDate.Year(), createdDate.Month(), createdDate.Day(), 0, 0, 0, 0, payroll.TimeZone)
 
 	updatedTimeCard, err := payroll.UpdateTimeCard(id, timeCard)
 	if err != nil {
