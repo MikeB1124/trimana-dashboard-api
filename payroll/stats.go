@@ -8,13 +8,16 @@ import (
 )
 
 type EmployeeStats struct {
-	EmployeeID     string  `json:"employeeId"`
-	EmployeeName   string  `json:"employeeName"`
-	TotalHours     float64 `json:"totalHours"`
-	OvertimeHours  float64 `json:"overtimeHours"`
-	TotalPay       float64 `json:"totalPay"`
-	DaysWorked     int     `json:"daysWorked"`
-	AveragePerDay  float64 `json:"averagePerDay"`
+	EmployeeID       string  `json:"employeeId"`
+	EmployeeName     string  `json:"employeeName"`
+	TotalHours       float64 `json:"totalHours"`
+	OvertimeHours    float64 `json:"overtimeHours"`
+	TotalPay         float64 `json:"totalPay"`
+	DaysWorked       int     `json:"daysWorked"`
+	AveragePerDay    float64 `json:"averagePerDay"`
+	TotalBreakTime   float64 `json:"totalBreakTime"`
+	AverageBreakTime float64 `json:"averageBreakTime"`
+	BreakCount       int     `json:"breakCount"`
 }
 
 type DailyStats struct {
@@ -24,16 +27,20 @@ type DailyStats struct {
 }
 
 type OverallStats struct {
-	TotalEmployees       int               `json:"totalEmployees"`
-	ActiveEmployees      int               `json:"activeEmployees"`
-	TotalHoursThisPeriod float64           `json:"totalHoursThisPeriod"`
-	TotalPayrollCost     float64           `json:"totalPayrollCost"`
-	TotalOvertimeHours   float64           `json:"totalOvertimeHours"`
-	AverageHoursPerEmp   float64           `json:"averageHoursPerEmp"`
-	TopPerformers        []EmployeeStats   `json:"topPerformers"`
-	LeastActive          []EmployeeStats   `json:"leastActive"`
-	DailyTrend           []DailyStats      `json:"dailyTrend"`
-	EmployeeBreakdown    []EmployeeStats   `json:"employeeBreakdown"`
+	TotalEmployees       int             `json:"totalEmployees"`
+	ActiveEmployees      int             `json:"activeEmployees"`
+	TotalHoursThisPeriod float64         `json:"totalHoursThisPeriod"`
+	TotalPayrollCost     float64         `json:"totalPayrollCost"`
+	TotalOvertimeHours   float64         `json:"totalOvertimeHours"`
+	AverageHoursPerEmp   float64         `json:"averageHoursPerEmp"`
+	TotalBreakTime       float64         `json:"totalBreakTime"`
+	AverageBreakPerEmp   float64         `json:"averageBreakPerEmp"`
+	TopPerformers        []EmployeeStats `json:"topPerformers"`
+	LeastActive          []EmployeeStats `json:"leastActive"`
+	LongestBreaks        []EmployeeStats `json:"longestBreaks"`
+	NoBreakEmployees     []EmployeeStats `json:"noBreakEmployees"`
+	DailyTrend           []DailyStats    `json:"dailyTrend"`
+	EmployeeBreakdown    []EmployeeStats `json:"employeeBreakdown"`
 }
 
 func GetPayrollStats(startDate, endDate time.Time) (*OverallStats, error) {
@@ -43,10 +50,12 @@ func GetPayrollStats(startDate, endDate time.Time) (*OverallStats, error) {
 	}
 
 	stats := &OverallStats{
-		TotalEmployees: len(employees),
-		TopPerformers:  []EmployeeStats{},
-		LeastActive:    []EmployeeStats{},
-		DailyTrend:     []DailyStats{},
+		TotalEmployees:    len(employees),
+		TopPerformers:     []EmployeeStats{},
+		LeastActive:       []EmployeeStats{},
+		LongestBreaks:     []EmployeeStats{},
+		NoBreakEmployees:  []EmployeeStats{},
+		DailyTrend:        []DailyStats{},
 		EmployeeBreakdown: []EmployeeStats{},
 	}
 
@@ -62,11 +71,16 @@ func GetPayrollStats(startDate, endDate time.Time) (*OverallStats, error) {
 
 		totalHours := 0.0
 		overtimeHours := 0.0
+		totalBreakTime := 0.0
+		breakCount := 0
 		daysWorked := len(timeCards)
 
 		for _, timeCard := range timeCards {
 			dayHours := 0.0
-			for _, block := range timeCard.TimeBlocks {
+
+			// Calculate break time between blocks
+			for i := 0; i < len(timeCard.TimeBlocks); i++ {
+				block := timeCard.TimeBlocks[i]
 				if !block.CheckOut.IsZero() {
 					hoursForBlock := block.CheckOut.Sub(block.CheckIn).Hours()
 					totalHours += hoursForBlock
@@ -84,6 +98,19 @@ func GetPayrollStats(startDate, endDate time.Time) (*OverallStats, error) {
 						}
 					}
 				}
+
+				// Calculate break time (gap between current block's checkout and next block's checkin)
+				if i < len(timeCard.TimeBlocks)-1 && !block.CheckOut.IsZero() {
+					nextBlock := timeCard.TimeBlocks[i+1]
+					if !nextBlock.CheckIn.IsZero() {
+						breakDuration := nextBlock.CheckIn.Sub(block.CheckOut).Hours()
+						// Only count as break if less than 4 hours (otherwise might be end of shift)
+						if breakDuration > 0 && breakDuration < 4 {
+							totalBreakTime += breakDuration
+							breakCount++
+						}
+					}
+				}
 			}
 
 			// Calculate overtime for this day
@@ -95,37 +122,47 @@ func GetPayrollStats(startDate, endDate time.Time) (*OverallStats, error) {
 
 		if totalHours > 0 {
 			activeEmployees++
-			
+
 			standardHours := totalHours - overtimeHours
 			standardPay := standardHours * employee.HourlyRate
 			overtimePay := overtimeHours * employee.HourlyRate * 1.5
 			totalPay := standardPay + overtimePay
 
+			averageBreakTime := 0.0
+			if breakCount > 0 {
+				averageBreakTime = totalBreakTime / float64(breakCount)
+			}
+
 			empStats := EmployeeStats{
-				EmployeeID:    employee.EmployeeID,
-				EmployeeName:  employee.Name,
-				TotalHours:    totalHours,
-				OvertimeHours: overtimeHours,
-				TotalPay:      totalPay,
-				DaysWorked:    daysWorked,
-				AveragePerDay: totalHours / float64(daysWorked),
+				EmployeeID:       employee.EmployeeID,
+				EmployeeName:     employee.Name,
+				TotalHours:       totalHours,
+				OvertimeHours:    overtimeHours,
+				TotalPay:         totalPay,
+				DaysWorked:       daysWorked,
+				AveragePerDay:    totalHours / float64(daysWorked),
+				TotalBreakTime:   totalBreakTime,
+				AverageBreakTime: averageBreakTime,
+				BreakCount:       breakCount,
 			}
 
 			allEmployeeStats = append(allEmployeeStats, empStats)
 			stats.TotalHoursThisPeriod += totalHours
 			stats.TotalOvertimeHours += overtimeHours
 			stats.TotalPayrollCost += totalPay
+			stats.TotalBreakTime += totalBreakTime
 		}
 	}
 
 	stats.ActiveEmployees = activeEmployees
 	if activeEmployees > 0 {
 		stats.AverageHoursPerEmp = stats.TotalHoursThisPeriod / float64(activeEmployees)
+		stats.AverageBreakPerEmp = stats.TotalBreakTime / float64(activeEmployees)
 	}
 
 	// Sort for top performers (most hours)
 	stats.EmployeeBreakdown = allEmployeeStats
-	
+
 	// Get top 5 performers
 	topPerformers := make([]EmployeeStats, len(allEmployeeStats))
 	copy(topPerformers, allEmployeeStats)
@@ -158,11 +195,36 @@ func GetPayrollStats(startDate, endDate time.Time) (*OverallStats, error) {
 		stats.LeastActive = leastActive
 	}
 
+	// Get employees with longest breaks (top 5)
+	longestBreaks := make([]EmployeeStats, len(allEmployeeStats))
+	copy(longestBreaks, allEmployeeStats)
+	for i := 0; i < len(longestBreaks)-1; i++ {
+		for j := i + 1; j < len(longestBreaks); j++ {
+			if longestBreaks[j].TotalBreakTime > longestBreaks[i].TotalBreakTime {
+				longestBreaks[i], longestBreaks[j] = longestBreaks[j], longestBreaks[i]
+			}
+		}
+	}
+	if len(longestBreaks) > 5 {
+		stats.LongestBreaks = longestBreaks[:5]
+	} else {
+		stats.LongestBreaks = longestBreaks
+	}
+
+	// Get employees with no breaks (compliance concern)
+	var noBreakEmployees []EmployeeStats
+	for _, emp := range allEmployeeStats {
+		if emp.BreakCount == 0 && emp.TotalHours > 5.0 {
+			noBreakEmployees = append(noBreakEmployees, emp)
+		}
+	}
+	stats.NoBreakEmployees = noBreakEmployees
+
 	// Convert daily stats map to sorted array
 	for _, dailyStat := range dailyHoursMap {
 		stats.DailyTrend = append(stats.DailyTrend, *dailyStat)
 	}
-	
+
 	// Sort daily trend by date
 	for i := 0; i < len(stats.DailyTrend)-1; i++ {
 		for j := i + 1; j < len(stats.DailyTrend); j++ {
@@ -201,4 +263,3 @@ func GetTodayStats() (int, float64, error) {
 
 	return len(timeCards), totalHours, nil
 }
-
