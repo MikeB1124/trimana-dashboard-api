@@ -35,6 +35,9 @@ func init() {
 	// Pay period endpoints
 	router.Route("GET", "/payperiods", controllers.GetPayPeriods)
 	router.Route("GET", "/payperiods/current", controllers.GetCurrentPayPeriod)
+
+	// Stats endpoints
+	router.Route("GET", "/stats", controllers.GetStats)
 }
 
 func main() {
