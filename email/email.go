@@ -11,7 +11,7 @@ import (
 	"gopkg.in/gomail.v2"
 )
 
-func EmailCSVPayrollReport(csvBuffer *bytes.Buffer, filename string, payrollRecords []payroll.EmployeePayrollRecord, startPayPeriod time.Time, endPayPeriod time.Time) error {
+func EmailCSVPayrollReport(csvBuffer *bytes.Buffer, filename string, payrollRecords []payroll.EmployeePayrollRecord, startPayPeriod time.Time, endPayPeriod time.Time, customEmail string) error {
 	// Send email logic here
 	m := gomail.NewMessage()
 
@@ -22,7 +22,13 @@ func EmailCSVPayrollReport(csvBuffer *bytes.Buffer, filename string, payrollReco
 
 	// Set email sender, recipient, and subject
 	m.SetHeader("From", configuration.Config.GmailConfig.FromAddress)
-	m.SetHeader("To", "trimanaucla@gmail.com")
+
+	// Use custom email if provided, otherwise use default
+	recipientEmail := "trimanaucla@gmail.com"
+	if customEmail != "" {
+		recipientEmail = customEmail
+	}
+	m.SetHeader("To", recipientEmail)
 	m.SetHeader("Subject", subject)
 	m.SetBody("text/plain", buildPayrollRecordBody(payrollRecords))
 

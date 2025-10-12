@@ -76,33 +76,40 @@ func PayrollEvent(ctx context.Context, event events.APIGatewayProxyRequest) (eve
 type PayrollReportRequest struct {
 	StartDate string `json:"startDate,omitempty"`
 	EndDate   string `json:"endDate,omitempty"`
+	Email     string `json:"email,omitempty"`
 }
 
 func PayrollReport(ctx context.Context, event events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	log.Printf("Creating payroll report\n")
 
 	var startPayPeriod, endPayPeriod time.Time
+	var customEmail string
 	dateNow := time.Now().In(payroll.TimeZone)
 
-	// Check if custom date range is provided in the request body
+	// Check if custom parameters are provided in the request body
 	if event.Body != "" {
 		var request PayrollReportRequest
 		err := json.Unmarshal([]byte(event.Body), &request)
-		if err == nil && request.StartDate != "" && request.EndDate != "" {
-			// Parse custom date range
-			startPayPeriod, err = time.Parse(time.RFC3339, request.StartDate)
-			if err != nil {
-				log.Printf("Error parsing start date: %v\n", err)
-				return createResponse(payroll.Response{StatusCode: 400, Result: "Invalid start date format"})
+		if err == nil {
+			// Store custom email if provided
+			customEmail = request.Email
+
+			// Parse custom date range if provided
+			if request.StartDate != "" && request.EndDate != "" {
+				startPayPeriod, err = time.Parse(time.RFC3339, request.StartDate)
+				if err != nil {
+					log.Printf("Error parsing start date: %v\n", err)
+					return createResponse(payroll.Response{StatusCode: 400, Result: "Invalid start date format"})
+				}
+				endPayPeriod, err = time.Parse(time.RFC3339, request.EndDate)
+				if err != nil {
+					log.Printf("Error parsing end date: %v\n", err)
+					return createResponse(payroll.Response{StatusCode: 400, Result: "Invalid end date format"})
+				}
+				startPayPeriod = startPayPeriod.In(payroll.TimeZone)
+				endPayPeriod = endPayPeriod.In(payroll.TimeZone)
+				log.Printf("Using custom pay period: %s - %s\n", startPayPeriod, endPayPeriod)
 			}
-			endPayPeriod, err = time.Parse(time.RFC3339, request.EndDate)
-			if err != nil {
-				log.Printf("Error parsing end date: %v\n", err)
-				return createResponse(payroll.Response{StatusCode: 400, Result: "Invalid end date format"})
-			}
-			startPayPeriod = startPayPeriod.In(payroll.TimeZone)
-			endPayPeriod = endPayPeriod.In(payroll.TimeZone)
-			log.Printf("Using custom pay period: %s - %s\n", startPayPeriod, endPayPeriod)
 		}
 	}
 
@@ -115,6 +122,10 @@ func PayrollReport(ctx context.Context, event events.APIGatewayProxyRequest) (ev
 		}
 		startPayPeriod = endPayPeriod.AddDate(0, 0, -13)
 		log.Printf("Using automatic pay period: %s - %s\n", startPayPeriod, endPayPeriod)
+	}
+
+	if customEmail != "" {
+		log.Printf("Custom email recipient: %s\n", customEmail)
 	}
 
 	log.Printf("Pay Period: %s - %s\n", startPayPeriod, endPayPeriod)
@@ -226,11 +237,15 @@ func PayrollReport(ctx context.Context, event events.APIGatewayProxyRequest) (ev
 		endPayPeriod.Month(), endPayPeriod.Day(), endPayPeriod.Year(),
 	)
 
-	if err := email.EmailCSVPayrollReport(csvBuffer, csvFileName, employeePayrollsRecords, startPayPeriod, endPayPeriod); err != nil {
+	if err := email.EmailCSVPayrollReport(csvBuffer, csvFileName, employeePayrollsRecords, startPayPeriod, endPayPeriod, customEmail); err != nil {
 		log.Printf("Error sending email: %v\n", err)
 		return createResponse(payroll.Response{StatusCode: 500, Result: "Error sending email: " + err.Error()})
 	}
-	log.Printf("Email sent\n")
+	if customEmail != "" {
+		log.Printf("Email sent to custom recipient: %s\n", customEmail)
+	} else {
+		log.Printf("Email sent to default recipient\n")
+	}
 
 	return createResponse(payroll.Response{StatusCode: 200, Result: "OK"})
 }
