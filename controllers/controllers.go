@@ -73,15 +73,50 @@ func PayrollEvent(ctx context.Context, event events.APIGatewayProxyRequest) (eve
 	}
 }
 
+type PayrollReportRequest struct {
+	StartDate string `json:"startDate,omitempty"`
+	EndDate   string `json:"endDate,omitempty"`
+}
+
 func PayrollReport(ctx context.Context, event events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	log.Printf("Creating payroll report\n")
+
+	var startPayPeriod, endPayPeriod time.Time
 	dateNow := time.Now().In(payroll.TimeZone)
-	endPayPeriod := calendar.GetPayPeriod(dateNow)
-	if endPayPeriod.IsZero() {
-		log.Printf("Could not find pay date for %s\n", dateNow)
-		return createResponse(payroll.Response{StatusCode: 500, Result: fmt.Sprintf("Could not find pay date for %s", dateNow)})
+
+	// Check if custom date range is provided in the request body
+	if event.Body != "" {
+		var request PayrollReportRequest
+		err := json.Unmarshal([]byte(event.Body), &request)
+		if err == nil && request.StartDate != "" && request.EndDate != "" {
+			// Parse custom date range
+			startPayPeriod, err = time.Parse(time.RFC3339, request.StartDate)
+			if err != nil {
+				log.Printf("Error parsing start date: %v\n", err)
+				return createResponse(payroll.Response{StatusCode: 400, Result: "Invalid start date format"})
+			}
+			endPayPeriod, err = time.Parse(time.RFC3339, request.EndDate)
+			if err != nil {
+				log.Printf("Error parsing end date: %v\n", err)
+				return createResponse(payroll.Response{StatusCode: 400, Result: "Invalid end date format"})
+			}
+			startPayPeriod = startPayPeriod.In(payroll.TimeZone)
+			endPayPeriod = endPayPeriod.In(payroll.TimeZone)
+			log.Printf("Using custom pay period: %s - %s\n", startPayPeriod, endPayPeriod)
+		}
 	}
-	startPayPeriod := endPayPeriod.AddDate(0, 0, -13)
+
+	// If no custom date range provided, use automatic calculation
+	if startPayPeriod.IsZero() || endPayPeriod.IsZero() {
+		endPayPeriod = calendar.GetPayPeriod(dateNow)
+		if endPayPeriod.IsZero() {
+			log.Printf("Could not find pay date for %s\n", dateNow)
+			return createResponse(payroll.Response{StatusCode: 500, Result: fmt.Sprintf("Could not find pay date for %s", dateNow)})
+		}
+		startPayPeriod = endPayPeriod.AddDate(0, 0, -13)
+		log.Printf("Using automatic pay period: %s - %s\n", startPayPeriod, endPayPeriod)
+	}
+
 	log.Printf("Pay Period: %s - %s\n", startPayPeriod, endPayPeriod)
 
 	employees, err := payroll.GetEmployees()

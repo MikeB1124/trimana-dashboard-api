@@ -31,6 +31,10 @@ func init() {
 	router.Route("POST", "/timecards", controllers.CreateTimeCardManual)
 	router.Route("PUT", "/timecards/:id", controllers.UpdateTimeCardManual)
 	router.Route("DELETE", "/timecards/:id", controllers.DeleteTimeCardManual)
+
+	// Pay period endpoints
+	router.Route("GET", "/payperiods", controllers.GetPayPeriods)
+	router.Route("GET", "/payperiods/current", controllers.GetCurrentPayPeriod)
 }
 
 func main() {
